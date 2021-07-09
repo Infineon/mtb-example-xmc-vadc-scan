@@ -4,7 +4,7 @@ This code example demonstrates the working of the Versatile Analog to Digital Co
 
 ## Requirements
 
-- [ModusToolbox® software](https://www.cypress.com/products/modustoolbox-software-environment) v2.3
+- [ModusToolbox&trade; software](https://www.cypress.com/products/modustoolbox-software-environment) v2.3
 - [SEGGER J-Link software](https://www.segger.com/downloads/jlink/#J-LinkSoftwareAndDocumentationPack)
 - Programming Language: C
 - Associated Parts: All [XMC™ MCU](https://www.infineon.com/cms/en/product/microcontroller/32-bit-industrial-microcontroller-based-on-arm-cortex-m/) parts
@@ -110,6 +110,16 @@ Various CLI tools include a `-h` option that prints help information to the term
 
 You can debug the example to step through the code. In the IDE, use the **\<Application Name> Debug (JLink)** configuration in the **Quick Panel**. For more details, see the "Program and Debug" section in the [Eclipse IDE for ModusToolbox User Guide](https://www.cypress.com/MTBEclipseIDEUserGuide).
 
+## Design and implementation
+
+The code consists of three parts as follows:
+
+- **Part 1:** Calls the global initialization to provide a clock to the VADC and to initialize the global VADC registers using the 'XMC_VADC_GLOBAL_Init()' function. Afterward, the VADC group is initialized  and set to the normal operation mode using the 'XMC_VADC_GROUP_Init()' and 'XMC_VADC_GROUP_SetPowerMode()' functions. Concluding, the startup calibration is called to ensure a correct calibration using the 'XMC_VADC_GLOBAL_StartupCalibration()' function
+
+- **Part 2:** Provides initialization of the background source and the configured VADC channel.  Finally, the VADC channel is added to the background source. The group and channel numbers are assigned according the active kit. In the code, generic labels used as follows: 'GROUP_NUMBER' and 'CHANNEL_NUMBER'.
+
+- **Part 3:** Connects the background Request Source Event to NVIC node and generates an event to start continuous conversion. After conversion the result is available in the 'ADC_CONVERSION_EVENT_HANDLER()' function which compares the result of conversion with 2000 and set the output of the LED to HIGH, overwise the LED is set to LOW.
+
 ## Related Resources
 
 | Kit Guides                                            |                                                              |
@@ -141,13 +151,14 @@ Document Title: *CE232575* - *XMC MCU: VADC Scan*
 | Version | Description of Change |
 | ------- | --------------------- |
 | 1.0.0   | New code example      |
+| 1.0.1   | Updated README        |
 ------
 
 All other trademarks or registered trademarks referenced herein are the property of their respective owners.
 
 ![banner](images/ifx_logo_rgb.jpg)
 
-© 2021 Infineon Technologies AG
+© 2020-2021 Infineon Technologies AG
 
 All Rights Reserved.
 
