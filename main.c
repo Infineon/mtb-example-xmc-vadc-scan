@@ -3,13 +3,13 @@
 *
 * Description: This is the source code for the XMC MCU: VADC SCAN Example
 *              for ModusToolbox. This example shows how to configure ADC for 
-*              Continous Scan mode.ADC result is used to change status of LED on kit.
+*              Continuous Scan mode.ADC result is used to change status of LED on kit.
 *
 * Related Document: See README.md
 *
 ******************************************************************************
 *
-* Copyright (c) 2015-2021, Infineon Technologies AG
+* Copyright (c) 2015-2022, Infineon Technologies AG
 * All rights reserved.                        
 *                                             
 * Boost Software License - Version 1.0 - August 17th, 2003
@@ -40,6 +40,7 @@
 
 #include "cybsp.h"
 #include "cy_utils.h"
+#include "cy_retarget_io.h"
 #include "xmc_vadc.h"
 
 /*******************************************************************************
@@ -47,40 +48,48 @@
 *******************************************************************************/
 
 /*Define macros for XMC14x Boot kit*/
-#ifdef TARGET_KIT_XMC14_BOOT_001
+#if (UC_SERIES == XMC14)
 #define RES_REG_NUMBER                 (10)
 #define CHANNEL_NUMBER                 (7U)
 #define GROUP_NUMBER                   (1U)
 #define VADC_GROUP_PTR                 (VADC_G1)
-#define VADC_INTERRUPT_EVENT_PRIORITY  3
-#define SERVICE_REQUEST_LINE_SR        XMC_VADC_SR_SHARED_SR0
 #define INTERRUPT_PRIORITY_NODE_ID     IRQ15_IRQn
 #define ADC_CONVERSION_EVENT_HANDLER   IRQ_Hdlr_15
+#define VADC_INTERRUPT_EVENT_PRIORITY  3
+#define SERVICE_REQUEST_LINE_SR        XMC_VADC_SR_SHARED_SR0
 #endif
 
 #define ADC_MEASUREMENT_ICLASS_NUM     (0U)
 
-/*Define macros for XMC47x Relax kit*/
-#ifdef TARGET_KIT_XMC47_RELAX_V1
+/*Define macros for XMC48x and XMC47x Relax kits*/
+#if (UC_SERIES == XMC48) || (UC_SERIES == XMC47)
 #define RES_REG_NUMBER                 (4)
 #define CHANNEL_NUMBER                 (5U)
 #define GROUP_NUMBER                   (3U)
 #define VADC_GROUP_PTR                 (VADC_G3)
-#define VADC_INTERRUPT_EVENT_PRIORITY  63
-#define SERVICE_REQUEST_LINE_SR        XMC_VADC_SR_SHARED_SR2
 #define INTERRUPT_PRIORITY_NODE_ID     VADC0_C0_2_IRQn
 #define ADC_CONVERSION_EVENT_HANDLER   IRQ_Hdlr_16
+#define VADC_INTERRUPT_EVENT_PRIORITY  63
+#define SERVICE_REQUEST_LINE_SR        XMC_VADC_SR_SHARED_SR2
+#endif
+
+/* Define macro to enable/disable printing of debug messages */
+#define ENABLE_XMC_DEBUG_PRINT (1)
+
+#if ENABLE_XMC_DEBUG_PRINT
+static bool LED_TOGGLE = false;
 #endif
 
 /*******************************************************************************
 * Global Variables
 *******************************************************************************/
+
 static volatile uint32_t g_result_adc_measurement;
 
 /*******************************************************************************
 * Data Structure
 *******************************************************************************/
-/*Initialization data of a VADC Global*/
+/* Initialization data of a VADC Global */
 XMC_VADC_GLOBAL_CONFIG_t g_global_config =
 {
     .clock_config =
@@ -91,7 +100,7 @@ XMC_VADC_GLOBAL_CONFIG_t g_global_config =
     },
 };
 
-/*Initialization data of a VADC group*/
+/* Initialization data of a VADC group */
 XMC_VADC_GROUP_CONFIG_t g_group_config =
 {
     .class1 =
@@ -101,14 +110,14 @@ XMC_VADC_GROUP_CONFIG_t g_group_config =
     }
 };
 
-/*Initialization data of a Global iclass0 configuration*/
+/* Initialization data of a Global iclass0 configuration */
 const  XMC_VADC_GLOBAL_CLASS_t g_global_class =
 {
     .conversion_mode_standard   = (uint32_t) XMC_VADC_CONVMODE_12BIT, /*Results of conversion are 12bits wide*/
     .sample_time_std_conv       = (uint32_t) 0                        /*Sample time for channels directly connected to VADC*/
 };
 
-/*Initialization data of a VADC Channel*/
+/* Initialization data of a VADC Channel */
 XMC_VADC_CHANNEL_CONFIG_t  g_channel_config =
 {
     .input_class                = (uint32_t) XMC_VADC_CHANNEL_CONV_GLOBAL_CLASS0,     /*Global ICLASS 0 selected*/
@@ -127,7 +136,7 @@ XMC_VADC_CHANNEL_CONFIG_t  g_channel_config =
     .alias_channel              = (int8_t)   XMC_VADC_CHANNEL_ALIAS_DISABLED          /*ALIAS is Disabled*/
 };
 
-/*Initialization data of a VADC Result*/
+/* Initialization data of a VADC Result*/
 XMC_VADC_RESULT_CONFIG_t g_result_config =
 {
     .data_reduction_control     = (uint8_t)  0,                            /*No Accumulation*/
@@ -137,7 +146,7 @@ XMC_VADC_RESULT_CONFIG_t g_result_config =
     .event_gen_enable           = (uint32_t) 0                             /*Disable Result event*/
 };
 
-/*Initialization data of a  Background Scan Init Structure */
+/* Initialization data of a Background Scan Init Structure */
 const XMC_VADC_BACKGROUND_CONFIG_t g_backgroung_config =
 {
     .conv_start_mode   = (uint32_t) XMC_VADC_STARTMODE_CIR,         /*Conversion start mode selected as cancel inject repeat*/
@@ -151,6 +160,7 @@ const XMC_VADC_BACKGROUND_CONFIG_t g_backgroung_config =
     .enable_auto_scan  = (uint32_t) 1,                              /*Enables the continuous conversion mode*/
     .load_mode         = (uint32_t) XMC_VADC_SCAN_LOAD_OVERWRITE    /*Selects load event mode*/
 };
+
 
 /*******************************************************************************
 * Function Name: ADC_CONVERSION_EVENT_HANDLER
@@ -169,23 +179,30 @@ void ADC_CONVERSION_EVENT_HANDLER(void)
 {
     /*Read out conversion results*/
     g_result_adc_measurement=XMC_VADC_GROUP_GetResult(VADC_GROUP_PTR,RES_REG_NUMBER);
-
-    /*Compare the result counts  */
     if(g_result_adc_measurement >= 2000)
     {
-        #ifdef TARGET_KIT_XMC14_BOOT_001
+        /*Compare the result counts  */
+        #if (UC_SERIES == XMC14)
         XMC_GPIO_SetOutputLow(CYBSP_USER_LED_PORT, CYBSP_USER_LED_PIN);
         #endif
-        #ifdef TARGET_KIT_XMC47_RELAX_V1
+        #if (UC_SERIES == XMC47)
         XMC_GPIO_SetOutputHigh(CYBSP_USER_LED_PORT, CYBSP_USER_LED_PIN);
         #endif
     }
     else
     {
-        #ifdef TARGET_KIT_XMC14_BOOT_001
-        XMC_GPIO_SetOutputHigh(CYBSP_USER_LED_PORT, CYBSP_USER_LED_PIN);
+        #if ENABLE_XMC_DEBUG_PRINT
+        if(!LED_TOGGLE)
+        {
+        printf("LED Toggled\r\n");
+        LED_TOGGLE = true;
+        }
         #endif
-        #ifdef TARGET_KIT_XMC47_RELAX_V1
+
+        #if (UC_SERIES == XMC14)
+            XMC_GPIO_SetOutputHigh(CYBSP_USER_LED_PORT, CYBSP_USER_LED_PIN);
+        #endif
+        #if (UC_SERIES == XMC47)
         XMC_GPIO_SetOutputLow(CYBSP_USER_LED_PORT, CYBSP_USER_LED_PIN);
         #endif
     }
@@ -219,6 +236,13 @@ int main(void)
         CY_ASSERT(0);
     }
 
+    /* Initialize printf retarget */
+    cy_retarget_io_init(CYBSP_DEBUG_UART_HW);
+
+    #if ENABLE_XMC_DEBUG_PRINT
+    printf("Initialization done\r\n");
+    #endif
+
     /*Initialize an instance of Global hardware*/
     XMC_VADC_GLOBAL_Init(VADC, &g_global_config);
 
@@ -246,13 +270,13 @@ int main(void)
     /*Add all channels into the Background Request Source Channel Select Register*/
     XMC_VADC_GLOBAL_BackgroundAddChannelToSequence(VADC, GROUP_NUMBER, CHANNEL_NUMBER);
 
-    #ifdef TARGET_KIT_XMC14_BOOT_001
+    #if(UC_SERIES == XMC14)
     /*Set Priority for IRQ*/
     NVIC_SetPriority(INTERRUPT_PRIORITY_NODE_ID, VADC_INTERRUPT_EVENT_PRIORITY);
     #endif
 
-    #ifdef TARGET_KIT_XMC47_RELAX_V1
-    /*Set Priority for IRQ*/
+    #if(UC_SERIES == XMC47)
+   /*Set Priority for IRQ*/
     NVIC_SetPriority(INTERRUPT_PRIORITY_NODE_ID, NVIC_EncodePriority(NVIC_GetPriorityGrouping(), VADC_INTERRUPT_EVENT_PRIORITY, 0));
     #endif
 
@@ -267,5 +291,4 @@ int main(void)
 
     while(1);
 }
-
 /* [] END OF FILE */

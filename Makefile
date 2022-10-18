@@ -7,7 +7,7 @@
 #
 ################################################################################
 # \copyright
-# Copyright 2018-2021, Cypress Semiconductor Corporation (an Infineon company)
+# Copyright 2018-2022, Cypress Semiconductor Corporation (an Infineon company)
 # SPDX-License-Identifier: Apache-2.0
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -27,6 +27,8 @@
 ################################################################################
 # Basic Configuration
 ################################################################################
+
+MTB_TYPE=COMBINED
 
 # Target board/hardware (BSP).
 # To change the target, it is recommended to use the Library manager
@@ -79,6 +81,7 @@ VERBOSE=
 # ... then code in directories named COMPONENT_foo and COMPONENT_bar will be
 # added to the build
 #
+
 COMPONENTS=
 
 # Like COMPONENTS, but disable optional code that was enabled by default.
@@ -119,7 +122,7 @@ CXXFLAGS=
 ASFLAGS=
 
 # Additional / custom linker flags.
-LDFLAGS=
+LDFLAGS=--specs=nosys.specs
 
 # Additional / custom libraries to link in to the application.
 LDLIBS=
