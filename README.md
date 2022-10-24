@@ -161,6 +161,7 @@ Document title: *CE232575* - *XMC&trade; MCU: VADC scan*
  1.0.1   | Updated README
  1.1.0   | Added support for more kits
  2.0.0   | Updated to support ModusToolbox™ software v3.0; CE will not be backwards compatible with previous versions of ModusToolbox™ software |
+ 2.0.1   | Updated code example with cosmetic changes
 ------
 
 All other trademarks or registered trademarks referenced herein are the property of their respective owners.

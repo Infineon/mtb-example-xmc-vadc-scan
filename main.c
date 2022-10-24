@@ -62,7 +62,7 @@
 #define ADC_MEASUREMENT_ICLASS_NUM     (0U)
 
 /*Define macros for XMC48x and XMC47x Relax kits*/
-#if (UC_SERIES == XMC48) || (UC_SERIES == XMC47)
+#if (UC_SERIES == XMC47)
 #define RES_REG_NUMBER                 (4)
 #define CHANNEL_NUMBER                 (5U)
 #define GROUP_NUMBER                   (3U)
