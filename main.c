@@ -41,40 +41,35 @@
 #include "cybsp.h"
 #include "cy_utils.h"
 #include "cy_retarget_io.h"
-#include "xmc_vadc.h"
 
 /*******************************************************************************
 * Macros
 *******************************************************************************/
 
-/*Define macros for XMC14x Boot kit*/
-#if (UC_SERIES == XMC14)
-#define RES_REG_NUMBER                 (10)
-#define CHANNEL_NUMBER                 (7U)
-#define GROUP_NUMBER                   (1U)
-#define VADC_GROUP_PTR                 (VADC_G1)
-#define INTERRUPT_PRIORITY_NODE_ID     IRQ15_IRQn
-#define ADC_CONVERSION_EVENT_HANDLER   IRQ_Hdlr_15
-#define VADC_INTERRUPT_EVENT_PRIORITY  3
-#define SERVICE_REQUEST_LINE_SR        XMC_VADC_SR_SHARED_SR0
+/* Define macros for XMC12x, XMC13x and XMC14x Boot kits */
+#if (UC_SERIES == XMC12) || (UC_SERIES == XMC13) || (UC_SERIES == XMC14)
+#define RES_REG_NUMBER                      (10)
+#define CHANNEL_NUMBER                      (7U)
+#define ADC_CONVERSION_EVENT_HANDLER        VADC_SR0_INTERRUPT_HANDLER
+#define INTERRUPT_PRIORITY_NODE_ID          VADC_SR0_IRQN
 #endif
 
-#define ADC_MEASUREMENT_ICLASS_NUM     (0U)
-
-/*Define macros for XMC48x and XMC47x Relax kits*/
-#if (UC_SERIES == XMC47)
-#define RES_REG_NUMBER                 (4)
-#define CHANNEL_NUMBER                 (5U)
-#define GROUP_NUMBER                   (3U)
-#define VADC_GROUP_PTR                 (VADC_G3)
-#define INTERRUPT_PRIORITY_NODE_ID     VADC0_C0_2_IRQn
-#define ADC_CONVERSION_EVENT_HANDLER   IRQ_Hdlr_16
-#define VADC_INTERRUPT_EVENT_PRIORITY  63
-#define SERVICE_REQUEST_LINE_SR        XMC_VADC_SR_SHARED_SR2
+/* Define macros for XMC48x, XMC47x and XMC45x Relax kits and for XMC4200 and XMC4400 PLT2GO kits */
+#if (UC_FAMILY == XMC4)
+    #if (UC_SERIES == XMC48) || (UC_SERIES == XMC47)
+    #define CHANNEL_NUMBER                  (5U)
+    #else
+    #define CHANNEL_NUMBER                  (0U)
+    #endif
+#define RES_REG_NUMBER                      (4)
+#define ADC_CONVERSION_EVENT_HANDLER        VADC_SR2_INTERRUPT_HANDLER
+#define INTERRUPT_PRIORITY_NODE_ID          VADC_SR2_IRQN
 #endif
+
+#define ADC_MEASUREMENT_ICLASS_NUM          (0U)
 
 /* Define macro to enable/disable printing of debug messages */
-#define ENABLE_XMC_DEBUG_PRINT (1)
+#define ENABLE_XMC_DEBUG_PRINT              (0)
 
 #if ENABLE_XMC_DEBUG_PRINT
 static bool LED_TOGGLE = false;
@@ -85,82 +80,6 @@ static bool LED_TOGGLE = false;
 *******************************************************************************/
 
 static volatile uint32_t g_result_adc_measurement;
-
-/*******************************************************************************
-* Data Structure
-*******************************************************************************/
-/* Initialization data of a VADC Global */
-XMC_VADC_GLOBAL_CONFIG_t g_global_config =
-{
-    .clock_config =
-    {
-    .analog_clock_divider    = 1,  /*Clock for the converter*/
-    .msb_conversion_clock    = 0,  /*Additional clock cycle for analog converter*/
-    .arbiter_clock_divider   = 0   /*Request source arbiter clock divider*/
-    },
-};
-
-/* Initialization data of a VADC group */
-XMC_VADC_GROUP_CONFIG_t g_group_config =
-{
-    .class1 =
-    {
-    .conversion_mode_standard   = XMC_VADC_CONVMODE_12BIT, /*Conversion mode for channels directly connected to VADC*/
-    .sample_time_std_conv       = 0U                       /*Sample time for channels directly connected to VADC*/
-    }
-};
-
-/* Initialization data of a Global iclass0 configuration */
-const  XMC_VADC_GLOBAL_CLASS_t g_global_class =
-{
-    .conversion_mode_standard   = (uint32_t) XMC_VADC_CONVMODE_12BIT, /*Results of conversion are 12bits wide*/
-    .sample_time_std_conv       = (uint32_t) 0                        /*Sample time for channels directly connected to VADC*/
-};
-
-/* Initialization data of a VADC Channel */
-XMC_VADC_CHANNEL_CONFIG_t  g_channel_config =
-{
-    .input_class                = (uint32_t) XMC_VADC_CHANNEL_CONV_GLOBAL_CLASS0,     /*Global ICLASS 0 selected*/
-    .lower_boundary_select      = (uint32_t) XMC_VADC_CHANNEL_BOUNDARY_GROUP_BOUND0,  /*Group specific Boundary-0 value*/
-    .upper_boundary_select      = (uint32_t) XMC_VADC_CHANNEL_BOUNDARY_GROUP_BOUND0,  /*Group specific Boundary-0 value*/
-    .event_gen_criteria         = (uint32_t) XMC_VADC_CHANNEL_EVGEN_NEVER,            /*Channel Event disabled*/
-    .sync_conversion            = (uint32_t) 0,                                       /*Sync feature disabled*/
-    .alternate_reference        = (uint32_t) XMC_VADC_CHANNEL_REF_INTREF,             /*Internal reference selected*/
-    .result_reg_number          = (uint32_t) RES_REG_NUMBER,                          /*GxRES[x] selected*/
-    .use_global_result          = (uint32_t) 0,                                       /*Use Group result register*/
-    .result_alignment           = (uint32_t) XMC_VADC_RESULT_ALIGN_RIGHT,             /*Result alignment - Right Aligned*/
-    .broken_wire_detect_channel = (uint32_t) XMC_VADC_CHANNEL_BWDCH_VAGND,            /*No Broken wire mode select*/
-    .broken_wire_detect         = (uint32_t) 0,                                       /*No Broken wire detection*/
-    .bfl                        = (uint32_t) 0,                                       /*No Boundary flag*/
-    .channel_priority           = (uint32_t) 0,                                       /*Lowest Priority 0 selected*/
-    .alias_channel              = (int8_t)   XMC_VADC_CHANNEL_ALIAS_DISABLED          /*ALIAS is Disabled*/
-};
-
-/* Initialization data of a VADC Result*/
-XMC_VADC_RESULT_CONFIG_t g_result_config =
-{
-    .data_reduction_control     = (uint8_t)  0,                            /*No Accumulation*/
-    .post_processing_mode       = (uint32_t) XMC_VADC_DMM_REDUCTION_MODE,  /*Standard Data reduction mode*/
-    .wait_for_read_mode         = (uint32_t) 0,                            /*Disabled*/
-    .part_of_fifo               = (uint32_t) 0,                            /*No FIFO*/
-    .event_gen_enable           = (uint32_t) 0                             /*Disable Result event*/
-};
-
-/* Initialization data of a Background Scan Init Structure */
-const XMC_VADC_BACKGROUND_CONFIG_t g_backgroung_config =
-{
-    .conv_start_mode   = (uint32_t) XMC_VADC_STARTMODE_CIR,         /*Conversion start mode selected as cancel inject repeat*/
-    .req_src_priority  = (uint32_t) XMC_VADC_GROUP_RS_PRIORITY_1,   /*Priority of the Background request source in the VADC module*/
-    .trigger_signal    = (uint32_t) XMC_VADC_REQ_TR_A,              /*If Trigger needed then this denotes the Trigger signal*/
-    .trigger_edge      = (uint32_t) XMC_VADC_TRIGGER_EDGE_NONE,     /*If Trigger needed then this denotes Trigger edge selected*/
-    .gate_signal       = (uint32_t) XMC_VADC_REQ_GT_A,              /*If Gating needed then this denotes the Gating signal*/
-    .timer_mode        = (uint32_t) 0,                              /*Timer Mode Disabled*/
-    .external_trigger  = (uint32_t) 0,                              /*Trigger is Disabled*/
-    .req_src_interrupt = (uint32_t) 1,                              /*Background Request source interrupt Enabled*/
-    .enable_auto_scan  = (uint32_t) 1,                              /*Enables the continuous conversion mode*/
-    .load_mode         = (uint32_t) XMC_VADC_SCAN_LOAD_OVERWRITE    /*Selects load event mode*/
-};
-
 
 /*******************************************************************************
 * Function Name: ADC_CONVERSION_EVENT_HANDLER
@@ -178,14 +97,21 @@ const XMC_VADC_BACKGROUND_CONFIG_t g_backgroung_config =
 void ADC_CONVERSION_EVENT_HANDLER(void)
 {
     /*Read out conversion results*/
-    g_result_adc_measurement=XMC_VADC_GROUP_GetResult(VADC_GROUP_PTR,RES_REG_NUMBER);
+    g_result_adc_measurement=XMC_VADC_GROUP_GetResult(VADC_GROUP_HW, RES_REG_NUMBER);
+    
+    #if !(ENABLE_XMC_DEBUG_PRINT)
+    /* Prints the result in UART Terminal */
+    printf("ADC Result value is %lx \r\n", g_result_adc_measurement);
+    #endif
+    
     if(g_result_adc_measurement >= 2000)
     {
         /*Compare the result counts  */
-        #if (UC_SERIES == XMC14)
+        #if (UC_SERIES == XMC12) || (UC_SERIES == XMC13) || (UC_SERIES == XMC14)
         XMC_GPIO_SetOutputLow(CYBSP_USER_LED_PORT, CYBSP_USER_LED_PIN);
         #endif
-        #if (UC_SERIES == XMC47)
+        #if (UC_SERIES == XMC45) || (UC_SERIES == XMC47) || (UC_SERIES == XMC48) \
+            || (UC_SERIES == XMC42) || (UC_SERIES == XMC43) || (UC_SERIES == XMC44)
         XMC_GPIO_SetOutputHigh(CYBSP_USER_LED_PORT, CYBSP_USER_LED_PIN);
         #endif
     }
@@ -199,10 +125,11 @@ void ADC_CONVERSION_EVENT_HANDLER(void)
         }
         #endif
 
-        #if (UC_SERIES == XMC14)
+        #if (UC_SERIES == XMC12) || (UC_SERIES == XMC13) || (UC_SERIES == XMC14)
             XMC_GPIO_SetOutputHigh(CYBSP_USER_LED_PORT, CYBSP_USER_LED_PIN);
         #endif
-        #if (UC_SERIES == XMC47)
+        #if (UC_SERIES == XMC45) || (UC_SERIES == XMC47) || (UC_SERIES == XMC48) \
+            || (UC_SERIES == XMC42) || (UC_SERIES == XMC43) || (UC_SERIES == XMC44)
         XMC_GPIO_SetOutputLow(CYBSP_USER_LED_PORT, CYBSP_USER_LED_PIN);
         #endif
     }
@@ -243,45 +170,8 @@ int main(void)
     printf("Initialization done\r\n");
     #endif
 
-    /*Initialize an instance of Global hardware*/
-    XMC_VADC_GLOBAL_Init(VADC, &g_global_config);
-
-    /*Initialize Group */
-    XMC_VADC_GROUP_Init(VADC_GROUP_PTR, &g_group_config);
-
-    /*Switch on the converter of the Group[group_index]*/
-    XMC_VADC_GROUP_SetPowerMode(VADC_GROUP_PTR, XMC_VADC_GROUP_POWERMODE_NORMAL);
-
-    /*Calibrate the VADC. Make sure you do this after all used VADC groups are set to normal operation mode.*/
-    XMC_VADC_GLOBAL_StartupCalibration(VADC);
-
-    /*Initialize the Global Conversion class 0*/
-    XMC_VADC_GLOBAL_InputClassInit(VADC, g_global_class, XMC_VADC_GROUP_CONV_STD, ADC_MEASUREMENT_ICLASS_NUM);
-
-    /*Initialize the Background Scan hardware*/
-    XMC_VADC_GLOBAL_BackgroundInit(VADC, &g_backgroung_config);
-
-    /*Initialize for configured channels*/
-    XMC_VADC_GROUP_ChannelInit(VADC_GROUP_PTR, CHANNEL_NUMBER, &g_channel_config);
-
-    /*Initialize for configured result registers*/
-    XMC_VADC_GROUP_ResultInit(VADC_GROUP_PTR, RES_REG_NUMBER, &g_result_config);
-
     /*Add all channels into the Background Request Source Channel Select Register*/
-    XMC_VADC_GLOBAL_BackgroundAddChannelToSequence(VADC, GROUP_NUMBER, CHANNEL_NUMBER);
-
-    #if(UC_SERIES == XMC14)
-    /*Set Priority for IRQ*/
-    NVIC_SetPriority(INTERRUPT_PRIORITY_NODE_ID, VADC_INTERRUPT_EVENT_PRIORITY);
-    #endif
-
-    #if(UC_SERIES == XMC47)
-   /*Set Priority for IRQ*/
-    NVIC_SetPriority(INTERRUPT_PRIORITY_NODE_ID, NVIC_EncodePriority(NVIC_GetPriorityGrouping(), VADC_INTERRUPT_EVENT_PRIORITY, 0));
-    #endif
-
-    /*Connect background Request Source Event to NVIC node*/
-    XMC_VADC_GLOBAL_BackgroundSetReqSrcEventInterruptNode(VADC, SERVICE_REQUEST_LINE_SR);
+    XMC_VADC_GLOBAL_BackgroundAddChannelToSequence(VADC, VADC_GROUP_NUM, CHANNEL_NUMBER);
 
     /*Enable Background Continuous Scan Request source IRQ*/
     NVIC_EnableIRQ(INTERRUPT_PRIORITY_NODE_ID);
