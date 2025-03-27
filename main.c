@@ -56,11 +56,7 @@
 
 /* Define macros for XMC48x, XMC47x and XMC45x Relax kits and for XMC4200 and XMC4400 PLT2GO kits */
 #if (UC_FAMILY == XMC4)
-    #if (UC_SERIES == XMC48) || (UC_SERIES == XMC47)
-    #define CHANNEL_NUMBER                  (5U)
-    #else
-    #define CHANNEL_NUMBER                  (0U)
-    #endif
+#define CHANNEL_NUMBER                      (0U)
 #define RES_REG_NUMBER                      (4)
 #define ADC_CONVERSION_EVENT_HANDLER        VADC_SR2_INTERRUPT_HANDLER
 #define INTERRUPT_PRIORITY_NODE_ID          VADC_SR2_IRQN
@@ -79,7 +75,7 @@ static bool LED_TOGGLE = false;
 * Global Variables
 *******************************************************************************/
 
-static volatile uint32_t g_result_adc_measurement;
+static volatile unsigned long g_result_adc_measurement;
 
 /*******************************************************************************
 * Function Name: ADC_CONVERSION_EVENT_HANDLER

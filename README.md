@@ -4,35 +4,48 @@ This code example demonstrates the working of the versatile analog-to-digital co
 
 ## Requirements
 
-- [ModusToolbox&trade; software](https://www.infineon.com/products/modustoolbox-software-environment) v3.0
+- [ModusToolbox&trade; software](https://www.infineon.com/products/modustoolbox-software-environment) v3.4 or later (tested with v3.4)
 - [SEGGER J-Link software](https://www.segger.com/downloads/jlink/#J-LinkSoftwareAndDocumentationPack)
 - Programming language: C
 - Associated parts: All [XMC&trade; MCU](https://www.infineon.com/cms/en/product/microcontroller/32-bit-industrial-microcontroller-based-on-arm-cortex-m/) parts
 
 ## Supported toolchains (make variable 'TOOLCHAIN')
 
-- GNU Arm® embedded compiler v10.3.1 (`GCC_ARM`) - Default value of `TOOLCHAIN`
+- GNU Arm&reg; Embedded Compiler v11.3.1 (`GCC_ARM`) – Default value of `TOOLCHAIN`
 
 ## Supported kits (make variable 'TARGET')
 
-- [XMC1200 boot kit](https://www.infineon.com/cms/en/product/evaluation-boards/kit_xmc12_boot_001/) (`KIT_XMC12_BOOT_001`)
-- [XMC1300 boot kit](https://www.infineon.com/cms/en/product/evaluation-boards/kit_xmc13_boot_001/) (`KIT_XMC13_BOOT_001`)
-- [XMC1400 boot kit](https://www.infineon.com/cms/en/product/evaluation-boards/kit_xmc14_boot_001/) (`KIT_XMC14_BOOT_001`) - Default value of `TARGET`
-- [XMC4200 Platform2Go XTREME kit](https://www.infineon.com/cms/en/product/evaluation-boards/kit_xmc_plt2go_xmc4200/) (`KIT_XMC_PLT2GO_XMC4200`)
-- [XMC4300 relax EtherCAT kit](https://www.infineon.com/cms/en/product/evaluation-boards/kit_xmc43_relax_ecat_v1/) (`KIT_XMC43_RELAX_ECAT_V1`)
-- [XMC4400 Platform2Go XTREME kit](https://www.infineon.com/cms/en/product/evaluation-boards/kit_xmc_plt2go_xmc4400/) (`KIT_XMC_PLT2GO_XMC4400`)
-- [XMC4500 relax kit](https://www.infineon.com/cms/en/product/evaluation-boards/kit_xmc45_relax_v1/) (`KIT_XMC45_RELAX_V1`)
-- [XMC4700 relax kit](https://www.infineon.com/cms/en/product/evaluation-boards/kit_xmc47_relax_v1/) (`KIT_XMC47_RELAX_V1`)
-- [XMC4800 relax EtherCAT kit](https://www.infineon.com/cms/en/product/evaluation-boards/kit_xmc48_relax_ecat_v1/) (`KIT_XMC48_RELAX_ECAT_V1`)
+- [Boot Kit XMC1400](https://www.infineon.com/cms/en/product/evaluation-boards/kit_xmc14_boot_001/) (`KIT_XMC14_BOOT_001`) - Default value of `TARGET`
+- [Boot Kit XMC1200](https://www.infineon.com/cms/en/product/evaluation-boards/kit_xmc12_boot_001/) (`KIT_XMC12_BOOT_001`)
+- [Boot Kit XMC1300](https://www.infineon.com/cms/en/product/evaluation-boards/kit_xmc13_boot_001/) (`KIT_XMC13_BOOT_001`)
+- [XMC4200 Platform2Go](https://www.infineon.com/cms/en/product/evaluation-boards/kit_xmc_plt2go_xmc4200/) (`KIT_XMC_PLT2GO_XMC4200`)
+- [XMC4300 Relax EtherCAT&reg; Kit](https://www.infineon.com/cms/en/product/evaluation-boards/kit_xmc43_relax_ecat_v1/) (`KIT_XMC43_RELAX_ECAT_V1`)
+- [XMC4400 Platform2Go](https://www.infineon.com/cms/en/product/evaluation-boards/kit_xmc_plt2go_xmc4400/) (`KIT_XMC_PLT2GO_XMC4400`)
+- [XMC4500 Relax Kit](https://www.infineon.com/cms/en/product/evaluation-boards/kit_xmc45_relax_v1/) (`KIT_XMC45_RELAX_V1`)
+- [XMC4700 Relax Kit](https://www.infineon.com/cms/en/product/evaluation-boards/kit_xmc47_relax_v1/) (`KIT_XMC47_RELAX_V1`)
+- [XMC4800 Relax EtherCAT Kit](https://www.infineon.com/cms/en/product/evaluation-boards/kit_xmc48_relax_ecat_v1/) (`KIT_XMC48_RELAX_ECAT_V1`)
 
 
 ## Hardware setup
 
 This example uses the board's default configuration. See the kit user guide to ensure that the board is configured correctly.
 
+This example requires an analog input channel for ADC which is provided by the onboard potentiometer. However the some of the kits do not have an onboard potentiometer. For these kits, an analog pin (P14.0) is used to provide ADC input.
+
+See [Table 1](#Table-1-ADC-input-connections) for location of P14.0 in supported kits.
+
+#### Table 1. ADC input connections
+
+**Kits**            | **ADC input**
+|:---------------------------:|:------------------:|
+[XMC4300 Relax EtherCAT&reg; Kit](https://www.infineon.com/cms/en/product/evaluation-boards/kit_xmc43_relax_ecat_v1/)|    ANALOG IN header
+[XMC4500 Relax Kit](https://www.infineon.com/cms/en/product/evaluation-boards/kit_xmc45_relax_v1/)  |    X1 header
+[XMC4700 Relax Kit](https://www.infineon.com/cms/en/product/evaluation-boards/kit_xmc47_relax_v1/) |    ANALOG IN header
+[XMC4800 Relax EtherCAT Kit](https://www.infineon.com/cms/en/product/evaluation-boards/kit_xmc48_relax_ecat_v1/) |    ANALOG IN header
+
 ## Software setup
 
-Install a terminal emulator if you don't have one. Instructions in this document use [Tera Term](https://ttssh2.osdn.jp/index.html.en).
+Install a terminal emulator if you do not have one. Instructions in this document use [Tera Term](https://teratermproject.github.io/index-en.html).
 
 This example requires no additional software or tools.
 
@@ -42,23 +55,23 @@ Create the project and open it using one of the following:
 
 <details open><summary><b>In Eclipse IDE for ModusToolbox&trade; software</b></summary>
 
-1. Click the **New Application** link in the **Quick Panel** (or, use **File** > **New** > **ModusToolbox Application**). This launches the [Project Creator](https://www.infineon.com/ModusToolboxProjectCreator) tool.
+1. Click the **New Application** link in the **Quick Panel** (or, use **File** > **New** > **ModusToolbox Application**). This launches the [Project Creator](https://www.infineon.com/ModusToolboxProjectCreator) tool
 
-2. Pick a kit supported by the code example from the list shown in the **Project Creator - Choose Board Support Package (BSP)** dialog.
+2. Pick a kit supported by the code example from the list shown in the **Project Creator - Choose Board Support Package (BSP)** dialog
 
-   When you select a supported kit, the example is reconfigured automatically to work with the kit. To work with a different supported kit later, use the [Library Manager](https://www.infineon.com/ModusToolboxLibraryManager) to choose the BSP for the supported kit. You can use the Library Manager to select or update the BSP and firmware libraries used in this application. To access the Library Manager, click the link from the **Quick Panel**.
+   When you select a supported kit, the example is reconfigured automatically to work with the kit. To work with a different supported kit later, use the [Library Manager](https://www.infineon.com/ModusToolboxLibraryManager) to choose the BSP for the supported kit. You can use the Library Manager to select or update the BSP and firmware libraries used in this application. To access the Library Manager, click the link from the **Quick Panel**
 
-   You can also just start the application creation process again and select a different kit.
+   You can also just start the application creation process again and select a different kit
 
-   If you want to use the application for a kit not listed here, you may need to update the source files. If the kit does not have the required resources, the application may not work.
+   If you want to use the application for a kit not listed here, you may need to update the source files. If the kit does not have the required resources, the application may not work
 
-3. In the **Project Creator - Select Application** dialog, choose the example by enabling the checkbox.
+3. In the **Project Creator - Select Application** dialog, choose the example by enabling the checkbox
 
-4. (Optional) Change the suggested **New Application Name**.
+4. (Optional) Change the suggested **New Application Name**
 
-5. The **Application(s) Root Path** defaults to the Eclipse workspace which is usually the desired location for the application. If you want to store the application in a different location, you can change the *Application(s) Root Path* value. Applications that share libraries should be in the same root path.
+5. The **Application(s) Root Path** defaults to the Eclipse workspace which is usually the desired location for the application. If you want to store the application in a different location, you can change the *Application(s) Root Path* value. Applications that share libraries should be in the same root path
 
-6. Click **Create** to complete the application creation process.
+6. Click **Create** to complete the application creation process
 
 For more details, see the [Eclipse IDE for ModusToolbox&trade; software user guide](https://www.infineon.com/MTBEclipseIDEUserGuide) (locally available at *{ModusToolbox&trade; software install directory}/ide_{version}/docs/mt_ide_user_guide.pdf*).
 
@@ -96,31 +109,31 @@ The following example will clone the "[VADC scan](https://github.com/Infineon/mt
 
 **Note:** Only VS Code is supported.
 
-1. Follow the instructions from the **In command-line interface (CLI)** section to create the application, and import the libraries using the `make getlibs` command.
+1. Follow the instructions from the **In command-line interface (CLI)** section to create the application, and import the libraries using the `make getlibs` command
 
-2. Export the application to a supported IDE using the `make <ide>` command.
+2. Export the application to a supported IDE using the `make <ide>` command
 
    For a list of supported IDEs and more details, see the "Exporting to IDEs" section of the [ModusToolbox&trade; software user guide](https://www.infineon.com/ModusToolboxUserGuide) (locally available at *{ModusToolbox&trade; software install directory}/docs_{version}/mtb_user_guide.pdf*).
 
-3. Follow the instructions displayed in the terminal to create or import the application as an IDE project.
+3. Follow the instructions displayed in the terminal to create or import the application as an IDE project
 
 </details>
 
 ## Operation
 
-1. Connect the board to your PC using a micro-USB cable through the debug USB connector.
+1. Connect the board to your PC using a micro-USB cable through the debug USB connector
 
 2. Program the board using Eclipse IDE for ModusToolbox&trade; software:
 
-   1. Select the application project in the Project Explorer.
+   1. Select the application project in the Project Explorer
 
-   2. In the **Quick Panel**, scroll down, and click **\<Application Name> Program (JLink)**.
+   2. In the **Quick Panel**, scroll down, and click **\<Application Name> Program (JLink)**
 
-3. Turn the onboard potentiometer or press **Button 1** from the kit to change the voltage of the configured ADC channel.
+3. Turn the onboard potentiometer or vary the voltage on analog input pin by connecting it to VDD (3V3 on POWER/X1 header) or GND
 
-4. Confirm that the LED glows when the VADC result is more than 2000 counts.
+4. Confirm that the LED glows when the VADC result is more than 2000 counts
 
-5. Confirm that the ADC result values are displayed on the UART terminal as shown in Figure 1.
+5. Confirm that the ADC result values are displayed on the UART terminal as shown in Figure 1
 
    **Figure 1. ADC result value on the terminal**
 
@@ -135,11 +148,11 @@ You can debug the example to step through the code. In the IDE, use the **\<Appl
 
 The code consists of three parts as follows:
 
-- **Part 1:** Calls the global initialization to provide a clock to the VADC and to initialize the global VADC registers using the `XMC_VADC_GLOBAL_Init()` function. Afterward, the VADC group is initialized  and set to the normal operation mode using the `XMC_VADC_GROUP_Init()` and `XMC_VADC_GROUP_SetPowerMode()` functions. Concluding, the startup calibration is called to ensure a correct calibration using the `XMC_VADC_GLOBAL_StartupCalibration()` function.
+- **Part 1:** Calls the global initialization to provide a clock to the VADC and to initialize the global VADC registers using the `XMC_VADC_GLOBAL_Init()` function. Afterward, the VADC group is initialized  and set to the normal operation mode using the `XMC_VADC_GROUP_Init()` and `XMC_VADC_GROUP_SetPowerMode()` functions. Concluding, the startup calibration is called to ensure a correct calibration using the `XMC_VADC_GLOBAL_StartupCalibration()` function
 
-- **Part 2:** Provides initialization of the background source and the configured VADC channel. Finally, the VADC channel is added to the background source. The group and channel numbers are assigned according to the active kit. In the code, generic labels are used as follows: **GROUP_NUMBER** and **CHANNEL_NUMBER**.
+- **Part 2:** Provides initialization of the background source and the configured VADC channel. Finally, the VADC channel is added to the background source. The group and channel numbers are assigned according to the active kit. In the code, generic labels are used as follows: **GROUP_NUMBER** and **CHANNEL_NUMBER**
 
-- **Part 3:** Connects the background Request Source Event to NVIC node and generates an event to start continuous conversion. After conversion, the result is available in the `ADC_CONVERSION_EVENT_HANDLER()` function which compares the result of conversion with 2000 and set the output of the LED to HIGH, overwise the LED is set to LOW.
+- **Part 3:** Connects the background Request Source Event to NVIC node and generates an event to start continuous conversion. After conversion, the result is available in the `ADC_CONVERSION_EVENT_HANDLER()` function which compares the result of conversion with 2000 and set the output of the LED to HIGH, overwise the LED is set to LOW
 
 ### Resources and settings
 
@@ -160,7 +173,7 @@ Tools  | [Eclipse IDE for ModusToolbox&trade; software](https://www.infineon.com
 
 Infineon provides a wealth of data at [www.infineon.com](https://www.infineon.com) to help you select the right device, and quickly and effectively integrate it into your design.
 
-For XMC&trade; MCU devices, see [32-bit XMC™ industrial microcontroller based on Arm® Cortex®-M](https://www.infineon.com/cms/en/product/microcontroller/32-bit-industrial-microcontroller-based-on-arm-cortex-m/).
+For XMC&trade; MCU devices, see [32-bit XMC™ industrial microcontroller based on Arm&reg; Cortex&reg;-M](https://www.infineon.com/cms/en/product/microcontroller/32-bit-industrial-microcontroller-based-on-arm-cortex-m/).
 
 ## Document history
 
@@ -171,15 +184,16 @@ Document title: *CE232575* - *XMC&trade; MCU: VADC scan*
  1.0.0   | New code example
  1.0.1   | Updated README
  1.1.0   | Added support for more kits
- 2.0.0   | Updated to support ModusToolbox™ software v3.0; CE will not be backwards compatible with previous versions of ModusToolbox™ software |
+ 2.0.0   | Updated to support ModusToolbox&trade; software v3.0; CE will not be backwards compatible with previous versions of ModusToolbox&trade; software |
  2.0.1   | Updated code example with cosmetic changes
  2.1.0   | Added support for CCU8 personality and new kits
-| 2.1.1   | Updated README        |
+ 2.1.1   | Updated README
+ 2.2.0   | Fixed build warnings <br> Updated analog input configuration for KIT_XMC43_RELAX_ECAT_V1, KIT_XMC45_RELAX_V1, KIT_XMC47_RELAX_V1 and KIT_XMC48_RELAX_ECAT_V1 
 ------
 
 All other trademarks or registered trademarks referenced herein are the property of their respective owners.
 
-© 2022 Infineon Technologies AG
+© 2022-2025 Infineon Technologies AG
 
 All Rights Reserved.
 
